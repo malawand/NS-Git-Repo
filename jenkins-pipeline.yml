@@ -1,0 +1,43 @@
+name: 'ACI Terraform'
+
+on:
+  push:
+    branches: [ "master" ]
+
+permissions:
+  contents: read
+
+jobs: 
+  terraform: 
+    environment: lab
+    name: "Run Terraform on runner"
+    runs-on: self-hosted
+
+    # Use Bash shell
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    # Install the latest version of Terraform CLI
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.1.9
+
+    # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+    - name: Terraform Init
+      run: terraform init
+
+    # Generates an execution plan for Terraform. Use secrets stored in GitHub.
+    - name: Terraform Plan
+      run: terraform plan -input=false -var username="${{ secrets.ACI_USERNAME }}" -var password="${{ secrets.ACI_PASSWORD }}"
+    
+    # On push to "master", build or change infrastructure according to Terraform configuration files. Use secrets stored in GitHub.
+    - name: Terraform Apply
+      #if: github.ref == 'refs/heads/"master"' && github.event_name == 'push' #Commenting this logic for now, may add back later. Need correct event_name.
+      run: terraform apply -auto-approve -input=false -var username="${{ secrets.ACI_USERNAME }}" -var password="${{ secrets.ACI_PASSWORD }}"
